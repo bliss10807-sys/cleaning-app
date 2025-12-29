@@ -14,14 +14,12 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, getDoc, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        // --- [반영 완료] Firebase 설정값이 실제 값으로 교체되었습니다 ---
         const firebaseConfig = {
             apiKey: "AIzaSyAEizes8sfPi-ZY2Vweg0tCmoaSA-6qRzE",
             authDomain: "cleaning-app-d5af2.firebaseapp.com",
@@ -31,18 +29,18 @@
             appId: "1:1088473603250:web:594cb50ebfff78768d7dab",
             measurementId: "G-5WP6QN61GE"
         };
-        // ---------------------------------------------------------
 
-        window.firebaseApp = initializeApp(firebaseConfig);
-        window.db = getFirestore(window.firebaseApp);
-        window.auth = getAuth(window.firebaseApp);
+        const app = initializeApp(firebaseConfig);
+        window.db = getFirestore(app);
+        window.auth = getAuth(app);
         window.firebaseUtils = { doc, setDoc, getDoc, collection, getDocs, deleteDoc, signInAnonymously, onAuthStateChanged };
+        window.appId = "cleaning-app-d5af2";
     </script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700;900&display=swap');
-        body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; }
-        .animate-fade-in { animation: fadeIn 0.5s ease-out; }
+        body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
@@ -51,7 +49,85 @@
 
     <script type="text/babel">
         const { useState, useEffect } = React;
-        const { CheckCircle2, Circle, Trash2, Plus, Archive, History, LayoutDashboard, Calendar, Info, ChevronLeft, RotateCcw, AlertCircle, ChevronDown, ChevronUp, Cloud, Check, RefreshCw } = lucide;
+
+        // 아이콘 컴포넌트
+        const Icons = {
+            CheckCircle2: ({ size = 24, className = "" }) => (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/>
+                </svg>
+            ),
+            Circle: ({ size = 24, className = "" }) => (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    <circle cx="12" cy="12" r="10"/>
+                </svg>
+            ),
+            Trash2: ({ size = 24, className = "" }) => (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>
+                </svg>
+            ),
+            Plus: ({ size = 24, className = "" }) => (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+            ),
+            Archive: ({ size = 24, className = "" }) => (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    <rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/>
+                </svg>
+            ),
+            Calendar: ({ size = 24, className = "" }) => (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+            ),
+            Info: ({ size = 24, className = "" }) => (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+                </svg>
+            ),
+            RotateCcw: ({ size = 24, className = "" }) => (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>
+                </svg>
+            ),
+            AlertCircle: ({ size = 24, className = "" }) => (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+            ),
+            ChevronDown: ({ size = 24, className = "" }) => (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    <path d="m6 9 6 6 6-6"/>
+                </svg>
+            ),
+            ChevronUp: ({ size = 24, className = "" }) => (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    <path d="m18 15-6-6-6 6"/>
+                </svg>
+            ),
+            Cloud: ({ size = 24, className = "" }) => (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    <path d="M17.5 19c3.037 0 5.5-2.463 5.5-5.5 0-2.97-2.354-5.388-5.292-5.492A7.5 7.5 0 0 0 3.12 11.232C1.3 12.072 0 13.886 0 16c0 2.761 2.239 5 5 5h12.5v-2Z"/>
+                </svg>
+            ),
+            Check: ({ size = 24, className = "" }) => (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    <path d="M20 6 9 17l-5-5"/>
+                </svg>
+            ),
+            RefreshCw: ({ size = 24, className = "" }) => (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    <path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/>
+                </svg>
+            ),
+            LayoutDashboard: ({ size = 24, className = "" }) => (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    <rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>
+                </svg>
+            )
+        };
 
         const INITIAL_DATA = {
             안방: [{ id: 1, text: "안방 보드게임장 정리", completed: false }, { id: 2, text: "안방 침대 및 청소", completed: false }, { id: 3, text: "안방 침대 위 청소", completed: false }, { id: 4, text: "안방 책장 정리", completed: false }, { id: 5, text: "안방 옷장 정리", completed: false }],
@@ -60,7 +136,7 @@
             서재방: [{ id: 12, text: "컴퓨터책상", completed: false }, { id: 13, text: "책장", completed: false }, { id: 14, text: "책장옆 수납함", completed: false }, { id: 15, text: "책상 옆 책꽂이", completed: false }, { id: 16, text: "책상 옆 트롤리", completed: false }],
             애들방: [{ id: 17, text: "애들책상", completed: false }, { id: 18, text: "장난감 수납함", completed: false }, { id: 19, text: "옷걸이", completed: false }, { id: 20, text: "옷장", completed: false }, { id: 21, text: "책상 및 수납", completed: false }],
             주방: [{ id: 22, text: "식탁 위 수납", completed: false }, { id: 23, text: "싱크대 위", completed: false }, { id: 24, text: "싱크대 수납", completed: false }, { id: 25, text: "오븐 장 1,2,3,4", completed: false }, { id: 26, text: "냉장고장1,2", completed: false }, { id: 27, text: "아일랜드장", completed: false }, { id: 28, text: "다용도실", completed: false }],
-            "복도,창고": [{ id: 29, text: "복도 책장", completed: false }, { id: 30, text: "신발장", completed: false }, { id: 31, text: "신발장 앞 창고", completed: false }, { id: 32, text: "복도 책장 앞 창고", completed: false }],
+            복도창고: [{ id: 29, text: "복도 책장", completed: false }, { id: 30, text: "신발장", completed: false }, { id: 31, text: "신발장 앞 창고", completed: false }, { id: 32, text: "복도 책장 앞 창고", completed: false }],
             욕실: [{ id: 33, text: "안방 욕실", completed: false }, { id: 34, text: "거실 욕실", completed: false }],
             알파룸: [{ id: 35, text: "알파룸 책장", completed: false }, { id: 36, text: "알파룸 책상", completed: false }, { id: 37, text: "남편 옷 정리", completed: false }]
         };
@@ -78,31 +154,38 @@
             const [toast, setToast] = useState(null);
             const [expandedHistoryId, setExpandedHistoryId] = useState(null);
 
+            const showToastMessage = (msg) => {
+                setToast(msg);
+                setTimeout(() => setToast(null), 2500);
+            };
+
             useEffect(() => {
-                const checkAuth = () => {
-                    if (!window.firebaseUtils) { setTimeout(checkAuth, 100); return; }
-                    const { signInAnonymously, onAuthStateChanged } = window.firebaseUtils;
-                    onAuthStateChanged(window.auth, (u) => {
-                        if (u) { setUser(u); } 
-                        else { signInAnonymously(window.auth); }
-                    });
-                };
-                checkAuth();
+                const { signInAnonymously, onAuthStateChanged } = window.firebaseUtils;
+                onAuthStateChanged(window.auth, (u) => {
+                    if (u) { setUser(u); } 
+                    else { signInAnonymously(window.auth); }
+                });
             }, []);
+
+            const loadHistory = async (uid) => {
+                const { collection, getDocs } = window.firebaseUtils;
+                try {
+                    const historyCol = collection(window.db, 'artifacts', window.appId, 'users', uid, 'history');
+                    const historySnap = await getDocs(historyCol);
+                    const historyList = historySnap.docs.map(d => ({ ...d.data(), docId: d.id }));
+                    setHistory(historyList.sort((a, b) => b.timestamp - a.timestamp));
+                } catch (err) { console.error(err); }
+            };
 
             useEffect(() => {
                 if (!user) return;
                 const loadData = async () => {
-                    const { doc, getDoc, collection, getDocs } = window.firebaseUtils;
+                    const { doc, getDoc } = window.firebaseUtils;
                     try {
-                        const docRef = doc(window.db, 'cleaning_data', user.uid);
+                        const docRef = doc(window.db, 'artifacts', window.appId, 'users', user.uid, 'settings', 'current');
                         const docSnap = await getDoc(docRef);
                         if (docSnap.exists()) setCategories(docSnap.data().categories);
-                        
-                        const historyCol = collection(window.db, 'cleaning_data', user.uid, 'history');
-                        const historySnap = await getDocs(historyCol);
-                        const historyList = historySnap.docs.map(d => d.data()).sort((a, b) => b.timestamp - a.timestamp);
-                        setHistory(historyList);
+                        await loadHistory(user.uid);
                     } catch (err) { console.error(err); }
                     finally { setLoading(false); }
                 };
@@ -114,7 +197,7 @@
                 setSyncing(true);
                 const { doc, setDoc } = window.firebaseUtils;
                 try {
-                    await setDoc(doc(window.db, 'cleaning_data', user.uid), { categories: newCategories });
+                    await setDoc(doc(window.db, 'artifacts', window.appId, 'users', user.uid, 'settings', 'current'), { categories: newCategories });
                 } catch (err) { console.error(err); }
                 finally { setTimeout(() => setSyncing(false), 500); }
             };
@@ -129,56 +212,189 @@
                 setCategories(updated);
                 saveToCloud(updated);
                 setNewTask("");
+                showToastMessage("새 항목이 추가되었습니다.");
             };
 
-            if (loading) return <div className="h-screen flex items-center justify-center text-indigo-600 font-bold">서버 연결 중...</div>;
+            const deleteTask = (cat, id) => {
+                const updated = { ...categories, [cat]: categories[cat].filter(x => x.id !== id) };
+                setCategories(updated);
+                saveToCloud(updated);
+                showToastMessage("항목이 삭제되었습니다.");
+            };
+
+            const toggleTask = (cat, id) => {
+                const updated = { ...categories, [cat]: categories[cat].map(x => x.id === id ? { ...x, completed: !x.completed } : x) };
+                setCategories(updated);
+                saveToCloud(updated);
+            };
+
+            const backupData = async () => {
+                const now = new Date();
+                const dateLabel = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}월`;
+                const { doc, setDoc } = window.firebaseUtils;
+                const backupEntry = {
+                    date: dateLabel,
+                    timestamp: Date.now(),
+                    data: JSON.parse(JSON.stringify(categories)),
+                    progress: overallProgress
+                };
+                try {
+                    await setDoc(doc(window.db, 'artifacts', window.appId, 'users', user.uid, 'history', dateLabel), backupEntry);
+                    await loadHistory(user.uid);
+                    showToastMessage(dateLabel + " 기록이 서버에 백업되었습니다.");
+                } catch (err) { console.error(err); }
+            };
+
+            const deleteHistory = async (docId) => {
+                const { doc, deleteDoc } = window.firebaseUtils;
+                try {
+                    await deleteDoc(doc(window.db, 'artifacts', window.appId, 'users', user.uid, 'history', docId));
+                    await loadHistory(user.uid);
+                    showToastMessage("백업 기록이 삭제되었습니다.");
+                } catch (err) { console.error(err); }
+            };
+
+            const resetChecks = () => {
+                const reset = {};
+                Object.keys(categories).forEach(cat => {
+                    reset[cat] = categories[cat].map(t => ({ ...t, completed: false }));
+                });
+                setCategories(reset);
+                saveToCloud(reset);
+                setIsResetModalOpen(false);
+                showToastMessage("체크가 초기화되었습니다.");
+            };
+
+            if (loading) return <div className="h-screen flex flex-col items-center justify-center text-indigo-600 gap-4"><Icons.RefreshCw className="animate-spin" size={40} /><span className="font-bold text-lg tracking-tight">서버 연결 중...</span></div>;
 
             return (
-                <div className="max-w-3xl mx-auto px-4 py-8">
-                    <header className="mb-8 flex justify-between items-end">
-                        <div>
-                            <h1 className="text-2xl font-black text-indigo-600 flex items-center gap-2">우리집 대청소 {syncing ? "..." : "☁️"}</h1>
-                            <p className="text-slate-400 text-sm">실시간 서버 저장 중</p>
+                <div className="max-w-3xl mx-auto px-4 py-8 pb-24">
+                    {toast && (
+                        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] bg-slate-800 text-white px-6 py-3 rounded-2xl shadow-xl flex items-center gap-2 animate-fade-in">
+                            <Icons.CheckCircle2 size={16} className="text-emerald-400" />
+                            <span className="text-sm font-bold">{toast}</span>
                         </div>
-                        <div className="text-3xl font-black text-indigo-600">{overallProgress}%</div>
+                    )}
+
+                    {isResetModalOpen && (
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+                            <div className="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl animate-fade-in">
+                                <Icons.AlertCircle size={48} className="text-amber-500 mx-auto mb-4" />
+                                <h3 className="text-xl font-black mb-2 tracking-tight">체크를 모두 해제할까요?</h3>
+                                <p className="text-slate-500 text-sm mb-6 font-medium tracking-tight">추가하신 항목은 유지되며 완료 표시만 지워집니다.</p>
+                                <div className="flex gap-2">
+                                    <button onClick={() => setIsResetModalOpen(false)} className="flex-1 py-3 bg-slate-100 rounded-xl font-bold">취소</button>
+                                    <button onClick={resetChecks} className="flex-1 py-3 bg-indigo-600 text-white rounded-xl font-bold">확인</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <header className="mb-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+                        <div className="text-center sm:text-left">
+                            <h1 className="text-2xl font-black text-indigo-600 flex items-center gap-2 tracking-tight">우리집 대청소 {syncing ? <Icons.RefreshCw size={16} className="animate-spin" /> : <Icons.Cloud size={18} />}</h1>
+                            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Cloud synchronization active</p>
+                        </div>
+                        <div className="bg-white px-6 py-3 rounded-2xl shadow-sm border flex items-center gap-4 border-slate-200">
+                            <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
+                                <div className="bg-indigo-500 h-full transition-all duration-1000" style={{ width: overallProgress + "%" }}></div>
+                            </div>
+                            <span className="text-2xl font-black text-indigo-600 tabular-nums">{overallProgress}%</span>
+                        </div>
                     </header>
 
-                    <main className="space-y-6">
-                        <form onSubmit={addTask} className="flex gap-2 bg-white p-4 rounded-2xl shadow-sm border">
-                            <select value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)} className="bg-slate-50 p-2 rounded-xl text-sm font-bold outline-none">
-                                {Object.keys(categories).map(c => <option key={c} value={c}>{c}</option>)}
-                            </select>
-                            <input value={newTask} onChange={e => setNewTask(e.target.value)} placeholder="새 항목 입력" className="flex-1 p-2 bg-slate-50 rounded-xl outline-none" />
-                            <button type="submit" className="bg-indigo-600 text-white px-4 rounded-xl font-bold">+</button>
-                        </form>
+                    <nav className="flex gap-2 mb-6 bg-white p-1 rounded-2xl border border-slate-200 shadow-sm">
+                        <button onClick={() => setShowHistory(false)} className={`flex-1 py-3 rounded-xl font-bold transition-all ${!showHistory ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}>체크리스트</button>
+                        <button onClick={() => setShowHistory(true)} className={`flex-1 py-3 rounded-xl font-bold transition-all ${showHistory ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}>백업 보관함</button>
+                    </nav>
 
-                        {Object.entries(categories).map(([cat, tasks]) => (
-                            <section key={cat} className="bg-white rounded-3xl border shadow-sm overflow-hidden">
-                                <div className="bg-slate-50 p-4 border-b flex justify-between">
-                                    <h3 className="font-black text-slate-700">{cat}</h3>
-                                    <span className="text-xs font-bold text-indigo-500">{calculateProgress(tasks)}%</span>
+                    {!showHistory ? (
+                        <div className="space-y-6 animate-fade-in">
+                            <div className="flex justify-between items-center px-1">
+                                <h2 className="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2"><Icons.LayoutDashboard size={14} /> 청소 현황</h2>
+                                <div className="flex gap-2">
+                                    <button onClick={() => setIsResetModalOpen(true)} className="p-3 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-indigo-600 shadow-sm transition-colors" title="체크 초기화"><Icons.RotateCcw size={20} /></button>
+                                    <button onClick={backupData} className="flex items-center gap-2 px-5 py-3 bg-emerald-600 text-white rounded-xl font-bold shadow-md active:scale-95 transition-all"><Icons.Archive size={18} />월별 백업</button>
                                 </div>
-                                <div className="divide-y">
-                                    {tasks.map(t => (
-                                        <div key={t.id} className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50" onClick={() => {
-                                            const updated = { ...categories, [cat]: categories[cat].map(x => x.id === t.id ? { ...x, completed: !x.completed } : x) };
-                                            setCategories(updated); saveToCloud(updated);
-                                        }}>
-                                            <div className="flex items-center gap-3">
-                                                {t.completed ? "✅" : "⭕"}
-                                                <span className={t.completed ? "line-through text-slate-300" : "font-bold text-slate-600"}>{t.text}</span>
+                            </div>
+
+                            <form onSubmit={addTask} className="flex flex-col sm:flex-row gap-2 bg-white p-4 rounded-3xl shadow-sm border border-indigo-100">
+                                <select value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)} className="bg-slate-50 p-3 rounded-xl text-sm font-bold outline-none border-none cursor-pointer">
+                                    {Object.keys(categories).map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                                <div className="flex gap-2 flex-1">
+                                    <input value={newTask} onChange={e => setNewTask(e.target.value)} placeholder="새로운 청소 항목을 입력해 보세요" className="flex-1 p-3 bg-slate-50 rounded-xl outline-none text-sm font-medium" />
+                                    <button type="submit" className="bg-indigo-600 text-white px-6 rounded-xl font-bold active:scale-95 transition-all"><Icons.Plus size={20} /></button>
+                                </div>
+                            </form>
+
+                            {Object.entries(categories).map(([cat, tasks]) => (
+                                <section key={cat} className="bg-white rounded-[2rem] border shadow-sm overflow-hidden border-slate-200">
+                                    <div className="bg-slate-50/50 p-5 border-b flex justify-between items-center border-slate-100">
+                                        <h3 className="font-black text-slate-700 tracking-tight text-lg">{cat}</h3>
+                                        <span className="text-xs font-black text-indigo-500 bg-white px-3 py-1 rounded-full border border-slate-100 shadow-sm">{calculateProgress(tasks)}%</span>
+                                    </div>
+                                    <div className="divide-y divide-slate-50">
+                                        {tasks.length === 0 ? <p className="p-8 text-center text-slate-300 text-sm italic tracking-tight">추가된 항목이 없습니다.</p> : tasks.map(t => (
+                                            <div key={t.id} className="p-5 flex items-center justify-between cursor-pointer hover:bg-indigo-50/20 transition-colors" onClick={() => toggleTask(cat, t.id)}>
+                                                <div className="flex items-center gap-4 min-w-0">
+                                                    {t.completed ? <Icons.CheckCircle2 size={24} className="text-emerald-500 shrink-0" /> : <Icons.Circle size={24} className="text-slate-200 shrink-0" />}
+                                                    <span className={`truncate text-[15px] ${t.completed ? "line-through text-slate-300 italic font-medium" : "font-bold text-slate-700"}`}>{t.text}</span>
+                                                </div>
+                                                <button onClick={(e) => { e.stopPropagation(); deleteTask(cat, t.id); }} className="text-slate-200 hover:text-red-400 p-2 transition-colors"><Icons.Trash2 size={20} /></button>
                                             </div>
-                                            <button onClick={(e) => {
-                                                e.stopPropagation();
-                                                const updated = { ...categories, [cat]: categories[cat].filter(x => x.id !== t.id) };
-                                                setCategories(updated); saveToCloud(updated);
-                                            }} className="text-slate-300 hover:text-red-400">🗑️</button>
-                                        </div>
-                                    ))}
+                                        ))}
+                                    </div>
+                                </section>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="space-y-4 animate-fade-in">
+                            <h2 className="text-xl font-black text-slate-700 flex items-center gap-2 px-2 tracking-tight"><Icons.Calendar size={20} className="text-indigo-500" /> 월별 저장 기록</h2>
+                            {history.length === 0 ? (
+                                <div className="bg-white border-2 border-dashed border-slate-200 rounded-[2rem] p-20 text-center">
+                                    <Icons.Info size={40} className="text-slate-200 mx-auto mb-4" />
+                                    <p className="text-slate-400 font-bold tracking-tight">백업된 데이터가 없습니다.</p>
                                 </div>
-                            </section>
-                        ))}
-                    </main>
+                            ) : (
+                                history.map(record => (
+                                    <div key={record.timestamp} className="bg-white border rounded-[2rem] overflow-hidden shadow-sm border-slate-200">
+                                        <div className="p-6">
+                                            <div className="flex justify-between items-start mb-4">
+                                                <div>
+                                                    <span className="text-lg font-black text-slate-800 tracking-tight">{record.date} 백업 내역</span>
+                                                    <div className="mt-1 flex gap-2">
+                                                        <span className="text-[10px] font-black bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded uppercase tracking-tighter">성취도 {record.progress}%</span>
+                                                    </div>
+                                                </div>
+                                                <button onClick={() => deleteHistory(record.docId)} className="text-slate-300 hover:text-red-500 p-2 transition-colors"><Icons.Trash2 size={20} /></button>
+                                            </div>
+                                            <button onClick={() => setExpandedHistoryId(expandedHistoryId === record.timestamp ? null : record.timestamp)} className="w-full py-4 bg-slate-50 rounded-2xl text-sm font-bold text-indigo-600 flex justify-center items-center gap-2 transition-colors hover:bg-slate-100 shadow-inner">
+                                                {expandedHistoryId === record.timestamp ? <><Icons.ChevronUp size={18} /> 상세 닫기</> : <><Icons.ChevronDown size={18} /> 상세 항목 보기</>}
+                                            </button>
+                                        </div>
+                                        {expandedHistoryId === record.timestamp && (
+                                            <div className="bg-slate-50/50 border-t p-6 space-y-6 animate-fade-in border-slate-100">
+                                                {Object.entries(record.data).map(([catName, items]) => (
+                                                    <div key={catName}>
+                                                        <h4 className="text-xs font-black text-slate-400 mb-3 flex items-center gap-2 uppercase tracking-widest"><div className="w-1 h-3 bg-indigo-500 rounded-full" />{catName} 상세 결과</h4>
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                                            {items.map(item => (
+                                                                <div key={item.id} className="bg-white p-3 rounded-xl border border-slate-100 flex items-center gap-3 shadow-sm">
+                                                                    {item.completed ? <Icons.Check size={14} className="text-emerald-500" /> : <div className="w-3.5 h-3.5 border rounded-full border-slate-200" />}
+                                                                    <span className={`text-xs truncate font-medium tracking-tight ${item.completed ? "text-slate-300 italic" : "text-slate-600"}`}>{item.text}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    )}
                 </div>
             );
         }
