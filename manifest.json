@@ -1,0 +1,20 @@
+{
+"short_name": "우리집청소",
+"name": "우리집 대청소 매니저",
+"icons": [
+{
+"src": "https://www.google.com/search?q=https://cdn-icons-png.flaticon.com/512/995/995053.png",
+"sizes": "192x192",
+"type": "image/png"
+},
+{
+"src": "https://www.google.com/search?q=https://cdn-icons-png.flaticon.com/512/995/995053.png",
+"sizes": "512x512",
+"type": "image/png"
+}
+],
+"start_url": ".",
+"display": "standalone",
+"theme_color": "#4f46e5",
+"background_color": "#f8fafc"
+}
