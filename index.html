@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>우리집 대청소 매니저</title>
+    <!-- 설치형 앱(PWA) 설정 -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    
+    <!-- 필수 라이브러리 (React, Tailwind, Firebase) -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // --- [반영 완료] Firebase 설정값이 실제 값으로 교체되었습니다 ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyAEizes8sfPi-ZY2Vweg0tCmoaSA-6qRzE",
+            authDomain: "cleaning-app-d5af2.firebaseapp.com",
+            projectId: "cleaning-app-d5af2",
+            storageBucket: "cleaning-app-d5af2.firebasestorage.app",
+            messagingSenderId: "1088473603250",
+            appId: "1:1088473603250:web:594cb50ebfff78768d7dab",
+            measurementId: "G-5WP6QN61GE"
+        };
+        // ---------------------------------------------------------
+
+        window.firebaseApp = initializeApp(firebaseConfig);
+        window.db = getFirestore(window.firebaseApp);
+        window.auth = getAuth(window.firebaseApp);
+        window.firebaseUtils = { doc, setDoc, getDoc, collection, getDocs, deleteDoc, signInAnonymously, onAuthStateChanged };
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;700;900&display=swap');
+        body { font-family: 'Pretendard', sans-serif; background-color: #f8fafc; }
+        .animate-fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { CheckCircle2, Circle, Trash2, Plus, Archive, History, LayoutDashboard, Calendar, Info, ChevronLeft, RotateCcw, AlertCircle, ChevronDown, ChevronUp, Cloud, Check, RefreshCw } = lucide;
+
+        const INITIAL_DATA = {
+            안방: [{ id: 1, text: "안방 보드게임장 정리", completed: false }, { id: 2, text: "안방 침대 및 청소", completed: false }, { id: 3, text: "안방 침대 위 청소", completed: false }, { id: 4, text: "안방 책장 정리", completed: false }, { id: 5, text: "안방 옷장 정리", completed: false }],
+            드레스룸: [{ id: 6, text: "옷 정리", completed: false }, { id: 7, text: "화장대 정리", completed: false }],
+            거실: [{ id: 8, text: "거실장 정리", completed: false }, { id: 9, text: "회전책장", completed: false }, { id: 10, text: "쇼파 옆 수납함", completed: false }, { id: 11, text: "책상", completed: false }],
+            서재방: [{ id: 12, text: "컴퓨터책상", completed: false }, { id: 13, text: "책장", completed: false }, { id: 14, text: "책장옆 수납함", completed: false }, { id: 15, text: "책상 옆 책꽂이", completed: false }, { id: 16, text: "책상 옆 트롤리", completed: false }],
+            애들방: [{ id: 17, text: "애들책상", completed: false }, { id: 18, text: "장난감 수납함", completed: false }, { id: 19, text: "옷걸이", completed: false }, { id: 20, text: "옷장", completed: false }, { id: 21, text: "책상 및 수납", completed: false }],
+            주방: [{ id: 22, text: "식탁 위 수납", completed: false }, { id: 23, text: "싱크대 위", completed: false }, { id: 24, text: "싱크대 수납", completed: false }, { id: 25, text: "오븐 장 1,2,3,4", completed: false }, { id: 26, text: "냉장고장1,2", completed: false }, { id: 27, text: "아일랜드장", completed: false }, { id: 28, text: "다용도실", completed: false }],
+            "복도,창고": [{ id: 29, text: "복도 책장", completed: false }, { id: 30, text: "신발장", completed: false }, { id: 31, text: "신발장 앞 창고", completed: false }, { id: 32, text: "복도 책장 앞 창고", completed: false }],
+            욕실: [{ id: 33, text: "안방 욕실", completed: false }, { id: 34, text: "거실 욕실", completed: false }],
+            알파룸: [{ id: 35, text: "알파룸 책장", completed: false }, { id: 36, text: "알파룸 책상", completed: false }, { id: 37, text: "남편 옷 정리", completed: false }]
+        };
+
+        function App() {
+            const [user, setUser] = useState(null);
+            const [categories, setCategories] = useState(INITIAL_DATA);
+            const [history, setHistory] = useState([]);
+            const [loading, setLoading] = useState(true);
+            const [syncing, setSyncing] = useState(false);
+            const [newTask, setNewTask] = useState("");
+            const [selectedCategory, setSelectedCategory] = useState("주방");
+            const [showHistory, setShowHistory] = useState(false);
+            const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+            const [toast, setToast] = useState(null);
+            const [expandedHistoryId, setExpandedHistoryId] = useState(null);
+
+            useEffect(() => {
+                const checkAuth = () => {
+                    if (!window.firebaseUtils) { setTimeout(checkAuth, 100); return; }
+                    const { signInAnonymously, onAuthStateChanged } = window.firebaseUtils;
+                    onAuthStateChanged(window.auth, (u) => {
+                        if (u) { setUser(u); } 
+                        else { signInAnonymously(window.auth); }
+                    });
+                };
+                checkAuth();
+            }, []);
+
+            useEffect(() => {
+                if (!user) return;
+                const loadData = async () => {
+                    const { doc, getDoc, collection, getDocs } = window.firebaseUtils;
+                    try {
+                        const docRef = doc(window.db, 'cleaning_data', user.uid);
+                        const docSnap = await getDoc(docRef);
+                        if (docSnap.exists()) setCategories(docSnap.data().categories);
+                        
+                        const historyCol = collection(window.db, 'cleaning_data', user.uid, 'history');
+                        const historySnap = await getDocs(historyCol);
+                        const historyList = historySnap.docs.map(d => d.data()).sort((a, b) => b.timestamp - a.timestamp);
+                        setHistory(historyList);
+                    } catch (err) { console.error(err); }
+                    finally { setLoading(false); }
+                };
+                loadData();
+            }, [user]);
+
+            const saveToCloud = async (newCategories) => {
+                if (!user) return;
+                setSyncing(true);
+                const { doc, setDoc } = window.firebaseUtils;
+                try {
+                    await setDoc(doc(window.db, 'cleaning_data', user.uid), { categories: newCategories });
+                } catch (err) { console.error(err); }
+                finally { setTimeout(() => setSyncing(false), 500); }
+            };
+
+            const calculateProgress = (list) => list.length === 0 ? 0 : Math.round((list.filter(t => t.completed).length / list.length) * 100);
+            const overallProgress = calculateProgress(Object.values(categories).flat());
+
+            const addTask = (e) => {
+                e.preventDefault();
+                if (!newTask.trim()) return;
+                const updated = { ...categories, [selectedCategory]: [...categories[selectedCategory], { id: Date.now(), text: newTask, completed: false }] };
+                setCategories(updated);
+                saveToCloud(updated);
+                setNewTask("");
+            };
+
+            if (loading) return <div className="h-screen flex items-center justify-center text-indigo-600 font-bold">서버 연결 중...</div>;
+
+            return (
+                <div className="max-w-3xl mx-auto px-4 py-8">
+                    <header className="mb-8 flex justify-between items-end">
+                        <div>
+                            <h1 className="text-2xl font-black text-indigo-600 flex items-center gap-2">우리집 대청소 {syncing ? "..." : "☁️"}</h1>
+                            <p className="text-slate-400 text-sm">실시간 서버 저장 중</p>
+                        </div>
+                        <div className="text-3xl font-black text-indigo-600">{overallProgress}%</div>
+                    </header>
+
+                    <main className="space-y-6">
+                        <form onSubmit={addTask} className="flex gap-2 bg-white p-4 rounded-2xl shadow-sm border">
+                            <select value={selectedCategory} onChange={e => setSelectedCategory(e.target.value)} className="bg-slate-50 p-2 rounded-xl text-sm font-bold outline-none">
+                                {Object.keys(categories).map(c => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                            <input value={newTask} onChange={e => setNewTask(e.target.value)} placeholder="새 항목 입력" className="flex-1 p-2 bg-slate-50 rounded-xl outline-none" />
+                            <button type="submit" className="bg-indigo-600 text-white px-4 rounded-xl font-bold">+</button>
+                        </form>
+
+                        {Object.entries(categories).map(([cat, tasks]) => (
+                            <section key={cat} className="bg-white rounded-3xl border shadow-sm overflow-hidden">
+                                <div className="bg-slate-50 p-4 border-b flex justify-between">
+                                    <h3 className="font-black text-slate-700">{cat}</h3>
+                                    <span className="text-xs font-bold text-indigo-500">{calculateProgress(tasks)}%</span>
+                                </div>
+                                <div className="divide-y">
+                                    {tasks.map(t => (
+                                        <div key={t.id} className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50" onClick={() => {
+                                            const updated = { ...categories, [cat]: categories[cat].map(x => x.id === t.id ? { ...x, completed: !x.completed } : x) };
+                                            setCategories(updated); saveToCloud(updated);
+                                        }}>
+                                            <div className="flex items-center gap-3">
+                                                {t.completed ? "✅" : "⭕"}
+                                                <span className={t.completed ? "line-through text-slate-300" : "font-bold text-slate-600"}>{t.text}</span>
+                                            </div>
+                                            <button onClick={(e) => {
+                                                e.stopPropagation();
+                                                const updated = { ...categories, [cat]: categories[cat].filter(x => x.id !== t.id) };
+                                                setCategories(updated); saveToCloud(updated);
+                                            }} className="text-slate-300 hover:text-red-400">🗑️</button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+                        ))}
+                    </main>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
